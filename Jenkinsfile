@@ -25,11 +25,11 @@ pipeline {
             steps {
                 dir('infra') {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                	sh '''
-                    	terraform init
-                    	terraform apply -auto-approve \
-                        	-var "aws_access_key=$AWS_ACCESS_KEY_ID" \
-                        	-var "aws_secret_key=$AWS_SECRET_ACCESS_KEY"
+                        sh '''
+                        terraform init
+                        terraform apply -auto-approve \
+                                -var "aws_access_key=$AWS_ACCESS_KEY_ID" \
+                                -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY"
                         '''
                     }
                 }
@@ -39,13 +39,29 @@ pipeline {
         stage('Configure EC2 with Ansible') {
             steps {
                 dir('ansible') {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
-                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                            sh '''
-                                chmod 400 $SSH_KEY
-                                ansible-playbook -i inventory deploy.yml --private-key $SSH_KEY
-                            '''
+                    withCredentials([
+                        sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY'),
+                        [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+                    ]) {
+                        script {
+                            def publicIp = sh(
+                                script: '''
+                                    aws ec2 describe-instances --filters "Name=tag:Name,Values=CaseStudyAppInstance" \
+                                    --query "Reservations[*].Instances[*].PublicIpAddress" --output text --region ap-south-1
+                                ''',
+                                returnStdout: true
+                            ).trim()
+
+                            writeFile file: 'hosts.ini', text: """
+[app_server]
+${publicIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
+"""
                         }
+
+                        sh '''
+                            chmod 400 $SSH_KEY
+                            ansible-playbook -i hosts.ini deploy.yml --private-key $SSH_KEY
+                        '''
                     }
                 }
             }
