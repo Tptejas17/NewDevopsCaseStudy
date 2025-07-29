@@ -24,10 +24,12 @@ pipeline {
         stage('Provision EC2 with Terraform') {
             steps {
                 dir('infra') {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                        sh '''
-                            terraform init
-                            terraform apply -auto-approve
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                	sh '''
+                    	terraform init
+                    	terraform apply -auto-approve \
+                        	-var "aws_access_key=$AWS_ACCESS_KEY_ID" \
+                        	-var "aws_secret_key=$AWS_SECRET_ACCESS_KEY"
                         '''
                     }
                 }
