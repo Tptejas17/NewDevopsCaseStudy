@@ -2,8 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE = "tejasparab17/casestudy-node-app:latest"
-        AWS_DEFAULT_REGION = "ap-south-1"
+        IMAGE_NAME = "tejasparab17/casestudy-node-app:latest"
     }
 
     stages {
@@ -16,13 +15,15 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh 'chmod +x scripts/build_and_push.sh'
-                sh './scripts/build_and_push.sh'
+                withCredentials([usernamePassword(credentialsId: 'DockerHubCred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh './scripts/build_and_push.sh'
+                }
             }
         }
 
         stage('Provision EC2 with Terraform') {
             steps {
-                dir('infra/terraform') {
+                dir('terraform') {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                         sh '''
                             terraform init
@@ -35,16 +36,12 @@ pipeline {
 
         stage('Configure EC2 with Ansible') {
             steps {
-                dir('infra/ansible') {
-                    withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'KEY')]) {
+                dir('ansible') {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
                         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                             sh '''
-                                chmod 400 $KEY
-                                EC2_IP=$(cd ../terraform && terraform output -raw public_ip)
-                                echo "[web]" > inventory
-                                echo "$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=$KEY" >> inventory
-
-                                ansible-playbook -i inventory playbook.yml
+                                chmod 400 $SSH_KEY
+                                ansible-playbook -i inventory setup.yml --private-key $SSH_KEY
                             '''
                         }
                     }
@@ -54,11 +51,11 @@ pipeline {
     }
 
     post {
-        always {
-            echo '✅ Pipeline finished.'
+        success {
+            echo "✅ Pipeline completed successfully."
         }
         failure {
-            echo '❌ Something went wrong.'
+            echo "❌ Pipeline failed. Please check logs."
         }
     }
 }
