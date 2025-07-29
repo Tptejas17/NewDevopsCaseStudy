@@ -63,8 +63,14 @@ ${publicIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
                         }
 
                         sh '''
-                            chmod 400 $SSH_KEY
-                            ansible-playbook -i hosts.ini deploy.yml --private-key $SSH_KEY
+                        	echo "✅ Waiting for EC2 instance to be ready..."
+    				/usr/local/bin/aws ec2 wait instance-status-ok --instance-ids $(/usr/local/bin/aws ec2 describe-instances \
+    				--filters "Name=tag:Name,Values=CaseStudyAppInstance" \
+    				--query "Reservations[*].Instances[*].InstanceId" \
+    				--output text --region ap-south-1)
+
+    				chmod 400 $SSH_KEY
+    				ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini deploy.yml --private-key $SSH_KEY
                         '''
                     }
                 }
