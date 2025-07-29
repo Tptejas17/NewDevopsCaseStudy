@@ -7,7 +7,7 @@ provider "aws" {
 # Key-Pair Login
 
 resource "aws_key_pair" "my_key"{
-    key_name = "id_ed25519"
+    key_name = "devops-server-keypair"
     public_key = file("id_ed25519.pub")
 }
 
