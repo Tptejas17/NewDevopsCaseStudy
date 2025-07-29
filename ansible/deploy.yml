@@ -1,0 +1,29 @@
+- name: Deploy Node.js App with Docker
+  hosts: app_server
+  become: yes
+  tasks:
+    - name: Install Docker on Ubuntu
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Start Docker Service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Pull Node.js App Image from DockerHub
+      community.docker.docker_image:
+        name: tejasparab17/node-app:latest
+        source: pull
+
+    - name: Run Node.js Container
+      community.docker.docker_container:
+        name: nodejs-app
+        image: tejasparab17/node-app:latest
+        ports:
+          - "80:3000"
+        state: started
