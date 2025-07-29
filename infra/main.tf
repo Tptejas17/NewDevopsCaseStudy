@@ -22,7 +22,6 @@ resource "aws_instance" "app_server" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = file("~/.ssh/devops-server-key.pem")
       host        = self.public_ip
     }
   }
