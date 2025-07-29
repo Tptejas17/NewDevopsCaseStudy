@@ -1,87 +1,34 @@
-# Provider
-
 provider "aws" {
-    region = var.region
+  region     = "ap-south-1"
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
 }
 
-# Key-Pair Login
+resource "aws_instance" "app_server" {
+  ami                         = "ami-03f4878755434977f" # Ubuntu 22.04 in ap-south-1 (Mumbai)
+  instance_type               = "t2.micro"
+  key_name                    = "devops-server-keypair"
+  associate_public_ip_address = true
 
-resource "aws_key_pair" "my_key"{
-    key_name = "devops-server-keypair"
-    public_key = file("id_ed25519.pub")
-}
+  tags = {
+    Name = "devops-nodejs-instance"
+  }
 
-# Default VPC
+  provisioner "remote-exec" {
+    inline = [
+      "echo Hello from Terraform EC2!"
+    ]
 
-resource "aws_default_vpc" "default"{
-
-}
-
-# Default Subnet
-
-resource "aws_default_subnet" "default_az1" {
-    availability_zone = "ap-south-1a"
-}
-
-# Security Group
-
-resource "aws_security_group" "my_sec_grp"{
-    vpc_id = aws_default_vpc.default.id
-
-    # Inbound Rule
-
-    ingress {
-        from_port = 22
-        to_port = 22
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-        description = "SSH open"
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file("~/.ssh/devops-server-key.pem")
+      host        = self.public_ip
     }
-    ingress {
-        from_port = 80
-        to_port = 80
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-        description = "HTTP open"
-    }
-
-    # Outbound Rule
-
-    egress {
-        from_port = 0
-        to_port = 0
-        protocol = "-1"
-        cidr_blocks = ["0.0.0.0/0"]
-        description = "all access open outbound"
-    }
+  }
 }
 
-# EC2 Instance
-
-resource "aws_instance" "my_instance"{
-    key_name = aws_key_pair.my_key.key_name 
-    vpc_security_group_ids = [aws_security_group.my_sec_grp.id]
-    instance_type = var.ec2_instance_type
-    ami = var.ec2_instance_image
-    subnet_id = aws_default_subnet.default_az1.id
-
-    # Storage 
-
-    root_block_device{
-        volume_size = var.ec2_instance_volume
-        volume_type = var.ec2_instance_volume_type
-    }
-
-    # Name and Tags
-
-    tags = {
-        Name = "devops-server"
-    }
+output "public_ip" {
+  value = aws_instance.app_server.public_ip
 }
 
-# Elastic IP
-
-resource "aws_eip" "my_eip" {
-    instance = aws_instance.my_instance.id
-    domain = "vpc"
-}
