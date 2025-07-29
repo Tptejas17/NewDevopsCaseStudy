@@ -41,7 +41,7 @@ pipeline {
                         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                             sh '''
                                 chmod 400 $SSH_KEY
-                                ansible-playbook -i inventory setup.yml --private-key $SSH_KEY
+                                ansible-playbook -i inventory deploy.yml --private-key $SSH_KEY
                             '''
                         }
                     }
