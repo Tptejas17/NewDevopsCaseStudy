@@ -23,7 +23,7 @@ pipeline {
 
         stage('Provision EC2 with Terraform') {
             steps {
-                dir('terraform') {
+                dir('infra') {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
                         sh '''
                             terraform init
