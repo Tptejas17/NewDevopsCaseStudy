@@ -27,6 +27,10 @@ resource "aws_security_group" "ssh_access" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  tags = {
+    Name = "AllowSSHFromAnywhere"
+  }
+
   lifecycle {
     create_before_destroy = true
     prevent_destroy       = false
@@ -35,9 +39,9 @@ resource "aws_security_group" "ssh_access" {
 }
 
 resource "aws_instance" "app_server" {
-  ami                    = "ami-03bb6d83c60fc5f7c"  # Ubuntu 22.04 in Mumbai
-  instance_type          = "t2.micro"
-  key_name               = "devops-server-keypair"
+  ami           = "ami-03bb6d83c60fc5f7c"
+  instance_type = "t2.micro"
+  key_name      = "devops-server-keypair"
   vpc_security_group_ids = [aws_security_group.ssh_access.id]
 
   tags = {
