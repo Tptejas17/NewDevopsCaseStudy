@@ -34,17 +34,6 @@ resource "aws_instance" "app_server" {
   key_name               = "devops-server-keypair"
   vpc_security_group_ids = [aws_security_group.ssh_access.id]
 
-  provisioner "remote-exec" {
-    inline = ["echo Instance is ready"]
-
-    connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file("~/.ssh/devops-server-key.pem")
-      host        = self.public_ip
-    }
-  }
-
   tags = {
     Name = "CaseStudyAppInstance"
   }
