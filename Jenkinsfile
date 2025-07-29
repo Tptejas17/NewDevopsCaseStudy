@@ -50,7 +50,7 @@ pipeline {
                         script {
                             def publicIp = sh(
                                 script: '''
-                                    aws ec2 describe-instances --filters "Name=tag:Name,Values=CaseStudyAppInstance" \
+                                    /usr/local/bin/aws ec2 describe-instances --filters "Name=tag:Name,Values=CaseStudyAppInstance" \
                                     --query "Reservations[*].Instances[*].PublicIpAddress" --output text --region ap-south-1
                                 ''',
                                 returnStdout: true
