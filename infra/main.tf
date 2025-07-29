@@ -4,26 +4,49 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
-resource "aws_instance" "app_server" {
-  ami                         = "ami-03f4878755434977f" # Ubuntu 22.04 in ap-south-1 (Mumbai)
-  instance_type               = "t2.micro"
-  key_name                    = "devops-server-keypair"
-  associate_public_ip_address = true
+data "aws_vpc" "default" {
+  default = true
+}
 
-  tags = {
-    Name = "devops-nodejs-instance"
+resource "aws_security_group" "ssh_access" {
+  name        = "allow_ssh"
+  description = "Allow SSH access from anywhere"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_instance" "app_server" {
+  ami                    = "ami-03bb6d83c60fc5f7c"  # Ubuntu 22.04 in Mumbai
+  instance_type          = "t2.micro"
+  key_name               = "devops-server-keypair"
+  vpc_security_group_ids = [aws_security_group.ssh_access.id]
+
   provisioner "remote-exec" {
-    inline = [
-      "echo Hello from Terraform EC2!"
-    ]
+    inline = ["echo Instance is ready"]
 
     connection {
       type        = "ssh"
       user        = "ubuntu"
+      private_key = file("~/.ssh/devops-server-key.pem")
       host        = self.public_ip
     }
+  }
+
+  tags = {
+    Name = "CaseStudyAppInstance"
   }
 }
 
