@@ -1,10 +1,14 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+set -e
 
-IMAGE="tejasparab17/casestudy-node-app:latest"
+IMAGE_NAME="tejasparab17/casestudy-node-app:latest"
 
-echo "[INFO] Building Docker image: $IMAGE"
-docker build -t $IMAGE .
+echo "[INFO] Building Docker image: $IMAGE_NAME"
+docker build -t $IMAGE_NAME .
+
+echo "[INFO] Logging into DockerHub..."
+echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
 echo "[INFO] Pushing image to DockerHub..."
-docker push $IMAGE
+docker push $IMAGE_NAME
+
