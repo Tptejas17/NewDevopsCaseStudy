@@ -26,6 +26,12 @@ resource "aws_security_group" "ssh_access" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  lifecycle {
+    create_before_destroy = true
+    prevent_destroy       = false
+    ignore_changes        = [name]
+  }
 }
 
 resource "aws_instance" "app_server" {
