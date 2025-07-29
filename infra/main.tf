@@ -9,7 +9,7 @@ data "aws_vpc" "default" {
 }
 
 resource "aws_security_group" "ssh_access" {
-  name        = "allow_ssh"
+  name        = "allow_ssh_jenkins"
   description = "Allow SSH access from anywhere"
   vpc_id      = data.aws_vpc.default.id
 
