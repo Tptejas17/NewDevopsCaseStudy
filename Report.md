@@ -68,3 +68,5 @@ http://<your-latest-EC2-IP> (e.g. http://13.235.90.139)
 **Tejas Parab**  
 GitHub: [@Tptejas17](https://github.com/Tptejas17)  
 
+<img width="1394" height="819" alt="image" src="https://github.com/user-attachments/assets/f09134ac-e0a7-47b3-a60b-ce59b42aa2a5" />
+
