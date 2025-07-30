@@ -24,16 +24,21 @@ pipeline {
         stage('Provision EC2 with Terraform') {
             steps {
                 dir('infra') {
-        		withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                		sh '''
-                		terraform init
-                		terraform destroy -auto-approve \
-                        	-var "aws_access_key=$AWS_ACCESS_KEY_ID" \
-                        	-var "aws_secret_key=$AWS_SECRET_ACCESS_KEY"
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'aws-creds',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh '''
+                            terraform init
+                            terraform destroy -auto-approve \
+                                -var "aws_access_key=$AWS_ACCESS_KEY_ID" \
+                                -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY"
 
-                		terraform apply -auto-approve \
-                        	-var "aws_access_key=$AWS_ACCESS_KEY_ID" \
-                        	-var "aws_secret_key=$AWS_SECRET_ACCESS_KEY"
+                            terraform apply -auto-approve \
+                                -var "aws_access_key=$AWS_ACCESS_KEY_ID" \
+                                -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY"
                         '''
                     }
                 }
@@ -63,14 +68,18 @@ ${publicIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
                         }
 
                         sh '''
-                        	echo "✅ Waiting for EC2 instance to be ready..."
-    				/usr/local/bin/aws ec2 wait instance-status-ok --instance-ids $(/usr/local/bin/aws ec2 describe-instances \
-    				--filters "Name=tag:Name,Values=CaseStudyAppInstance" \
-    				--query "Reservations[*].Instances[*].InstanceId" \
-    				--output text --region ap-south-1)
+                            echo "✅ Waiting for EC2 instance to be ready..."
+                            INSTANCE_ID=$(/usr/local/bin/aws ec2 describe-instances \
+                                --filters "Name=tag:Name,Values=CaseStudyAppInstance" \
+                                --query "Reservations[*].Instances[*].InstanceId" \
+                                --output text --region ap-south-1)
 
-    				chmod 400 $SSH_KEY
-    				ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini deploy.yml --private-key $SSH_KEY
+                            /usr/local/bin/aws ec2 wait instance-status-ok \
+                                --instance-ids $INSTANCE_ID \
+                                --region ap-south-1
+
+                            chmod 400 $SSH_KEY
+                            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini deploy.yml --private-key $SSH_KEY
                         '''
                     }
                 }
