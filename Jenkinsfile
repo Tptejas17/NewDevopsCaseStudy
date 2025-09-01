@@ -63,7 +63,7 @@ pipeline {
 
                             writeFile file: 'hosts.ini', text: """
 [app_server]
-${publicIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
+${publicIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 """
                         }
 
@@ -71,7 +71,7 @@ ${publicIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
                             echo "Waiting for EC2 instance to be ready..."
                             INSTANCE_ID=$(/usr/local/bin/aws ec2 describe-instances \
                                 --filters "Name=tag:Name,Values=CaseStudyAppInstance" \
-                                --query "Reservations[*].Instances[*].InstanceId" \
+                                --query "Reservations[0].Instances[0].PublicIpAddress" \
                                 --output text --region ap-south-1)
 
                             /usr/local/bin/aws ec2 wait instance-status-ok \
