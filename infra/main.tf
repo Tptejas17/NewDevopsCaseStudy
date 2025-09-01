@@ -50,7 +50,7 @@ resource "aws_security_group" "ssh_access" {
 resource "aws_instance" "app_server" {
   ami           = "ami-03bb6d83c60fc5f7c"
   instance_type = "t2.micro"
-  key_name      = "jenkinskey.pem"
+  key_name      = "jenkinskey"
   vpc_security_group_ids = [aws_security_group.ssh_access.id]
 
   tags = {
