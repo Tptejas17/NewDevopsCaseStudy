@@ -78,7 +78,7 @@ ${publicIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
                                 --instance-ids $INSTANCE_ID \
                                 --region ap-south-1
 
-                            chmod 400 $SSH_KEY
+                            
                             ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini deploy.yml --private-key $SSH_KEY
                         '''
                     }
