@@ -68,7 +68,7 @@ ${publicIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
                         }
 
                         sh '''
-                            echo "✅ Waiting for EC2 instance to be ready..."
+                            echo "Waiting for EC2 instance to be ready..."
                             INSTANCE_ID=$(/usr/local/bin/aws ec2 describe-instances \
                                 --filters "Name=tag:Name,Values=CaseStudyAppInstance" \
                                 --query "Reservations[*].Instances[*].InstanceId" \
@@ -89,10 +89,10 @@ ${publicIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY}
 
     post {
         success {
-            echo "✅ Pipeline completed successfully."
+            echo "Pipeline completed successfully."
         }
         failure {
-            echo "❌ Pipeline failed. Please check logs."
+            echo "Pipeline failed. Please check logs."
         }
     }
 }
