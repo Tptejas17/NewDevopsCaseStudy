@@ -71,13 +71,22 @@ ${publicIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_KEY} ansible_
                             echo "Waiting for EC2 instance to be ready..."
                             INSTANCE_ID=$(/usr/local/bin/aws ec2 describe-instances \
                                 --filters "Name=tag:Name,Values=CaseStudyAppInstance" \
-                                --query "Reservations[0].Instances[0].PublicIpAddress" \
+                                --query "Reservations[0].Instances[0].InstanceId" \
                                 --output text --region ap-south-1)
+
+                            aws ec2 wait instance-status-ok --instance-ids $INSTANCE_ID --region ap-south-1
 
                             /usr/local/bin/aws ec2 wait instance-status-ok \
                                 --instance-ids $INSTANCE_ID \
                                 --region ap-south-1
 
+                            
+                            PUBLIC_IP=$(/usr/local/bin/aws ec2 describe-instances \
+                                --instance-ids $INSTANCE_ID \
+                                --query "Reservations[0].Instances[0].PublicIpAddress" \
+                                --output text --region ap-south-1)
+    
+                            echo "$PUBLIC_IP" > hosts.ini
                             
                             ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini deploy.yml --private-key $SSH_KEY
                         '''
